@@ -65,6 +65,8 @@ int lua_get_char_or_esc(lua_State *L) {
 			lua_pushinteger(L, getchar());
 		}
 		rnum = seq_len;
+	} else {
+		lua_pushinteger(L, c);
 	}
 	restore();
 	return rnum;
@@ -72,7 +74,7 @@ int lua_get_char_or_esc(lua_State *L) {
 
 static const luaL_Reg funcs[] = {
 	{"getchar", lua_getchar},
-	{"getEscSeq", lua_get_esc_seq},
+	{"getescseq", lua_get_esc_seq},
 	{"getCharOrEscSeq", lua_get_char_or_esc},
 	{NULL, NULL}
 };
