@@ -1,5 +1,5 @@
 CC = gcc
 CFLAGS = -Wall -fPIC
-LIBS = -llua -ldl -lm
+LIBS = -llua -ltermios
 : foreach *.c |> $(CC) $(CFLAGS) -c %f -o %o $(LIBS) |> %B.o
 : *.o |> $(CC) $(CFLAGS) %f -shared -o %o |> lgetchar.so
