@@ -1,8 +1,9 @@
 #!/usr/bin/env lua
 
-local getchar = require "lgetchar"
+local lgetchar = require "lgetchar"
 
 while true do
-	local char = getchar.getchar()
+	local char = lgetchar.getChar()
 	print("Character gotten: " .. char)
 end
+

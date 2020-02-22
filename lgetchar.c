@@ -1,5 +1,6 @@
-#include <termio.h>
-#include <stdio.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
@@ -28,11 +29,20 @@ int restore() {
 	return ioctl(fileno(stdin), TCSETAW, &initial_state);
 }
 
-int lua_getchar(lua_State *L) {
+int lua_get_char(lua_State *L) {
 	setup();
 	lua_pushinteger(L, getchar());
 	restore();
 	return 1;
+}
+
+int lua_get_char_seq(lua_State *L) {
+	int n = luaL_checkinteger(L, 1);
+	if(n < 1) return 0;
+	for(int i = 0; i < n; i++)
+		lua_pushinteger(L, getchar());
+	restore();
+	return n;
 }
 
 int lua_get_esc_seq(lua_State *L) {
@@ -49,33 +59,10 @@ int lua_get_esc_seq(lua_State *L) {
 	return rnum;
 }
 
-int lua_get_char_or_esc(lua_State *L) {
-	setup();
-	int rnum = 1;
-	int c = getchar();
-	if(c == 27) {
-		int argc = lua_gettop(L);
-		int seq_len = 3;
-		if(argc >= 1) {
-			seq_len = luaL_checkinteger(L, 1);
-		}
-		lua_pushinteger(L, c);
-
-		for(int i = 1; i < seq_len; i++) {
-			lua_pushinteger(L, getchar());
-		}
-		rnum = seq_len;
-	} else {
-		lua_pushinteger(L, c);
-	}
-	restore();
-	return rnum;
-}
-
 static const luaL_Reg funcs[] = {
-	{"getchar", lua_getchar},
-	{"getescseq", lua_get_esc_seq},
-	{"getCharOrEscSeq", lua_get_char_or_esc},
+	{"getChar", lua_get_char},
+	{"getCharSeq", lua_get_char_seq},
+	{"getEscSeq", lua_get_esc_seq},
 	{NULL, NULL}
 };
 
