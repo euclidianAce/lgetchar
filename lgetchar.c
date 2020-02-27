@@ -50,6 +50,7 @@ int lua_get_char(lua_State *L) {
 }
 
 int lua_get_char_seq(lua_State *L) {
+	setup();
 	int n = luaL_checkinteger(L, 1);
 	if(n < 1) return 0;
 	for(int i = 0; i < n; i++)
