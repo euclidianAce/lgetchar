@@ -9,24 +9,24 @@ lgetchar is avaliable on luarocks
 luarocks install lgetchar
 ```
 
-Or you can build from source with your choice of C compiler
+Or you can build from source with your choice of C compiler, for example:
 ```sh
 gcc -fPIC -c lgetchar.c -o lgetchar.o -llua
-gcc lgetchar.o -shared -o lgetchar.so -llua
+gcc lgetchar.o -shared -o lgetchar.so
 ```
 
 # Usage
-For now, this just adds three functions which almost all do the same thing.
+For now it just adds these functions
 
  - `getChar()`
- - `getCharSeq()`
- - `getEscSeq()`
+ - `getCharSeq(n)`
 
-Which all put the terminal into raw mode, shuts echo off and reads in a character or more and returns the ascii codes.
+Which for Windows, basically just calls `getch()`, and for non-windows will put the terminal into raw mode, shut echo off and call `getchar()`.
 
 # Implementation Details
-I have no idea how portable this is (probably only works on \*nix), but it works on my machine, so whatever.
-It uses termios.h and sys/ioctl.h to set the terminal and read in a character.
+For Windows, this is basically a wrapper for `getch()` from conio.h.
+For *nix, this uses termios.h and sys/ioctl.h to change some terminal settings (mainly turning off echo) and calls getchar().
+I still have no idea how portable this is, but it has worked on a few of my machines decently enough.
 
 # Anyway
 I may add more to this in the future, but the main use for this was for me to imitate some javascript cli menus that looked neat.
