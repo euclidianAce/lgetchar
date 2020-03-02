@@ -1,29 +1,16 @@
-/* lgetchar: Some Lua bindings to read character input from a terminal
- *
- * Copyright (C) 2020 Corey Williamson
- *
- * This file is part of lgetchar.
- *
- * lgetchar is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
- *
- * lgetchar is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along with lgetchar. If not, see http://www.gnu.org/licenses/.
-*/
-
-#if defined(WIN32) || defined(_WIN32)
-#include <conio.h>
-#define WINDOWS
-#else
-#include <sys/ioctl.h>
-#include <termios.h>
-int setup();
-int restore();
-#endif
-
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+
+#if defined(WIN32) || defined(_WIN32)
+#define WINDOWS
+#include <conio.h>
+#else
+#include <termios.h>
+#include <sys/ioctl.h>
+int setup();
+int restore();
+#endif
 
 int get_char() {
 #ifdef WINDOWS
@@ -37,7 +24,7 @@ int lua_get_char(lua_State *L) {
 #ifndef WINDOWS
 	setup();
 #endif
-	lua_pushinteger(L, get_char());
+	lua_pushnumber(L, get_char());
 #ifndef WINDOWS
 	restore();
 #endif
@@ -45,47 +32,27 @@ int lua_get_char(lua_State *L) {
 }
 
 int lua_get_char_seq(lua_State *L) {
-	int n = luaL_checkinteger(L, 1);
+	int n = (int) luaL_checknumber(L, 1);
 	if(n < 1) return 0;
 #ifndef WINDOWS
 	setup();
 #endif
 	for(int i = 0; i < n; i++)
-		lua_pushinteger(L, get_char());
+		lua_pushnumber(L, get_char());
 #ifndef WINDOWS
 	restore();
 #endif
 	return n;
 }
 
-int lua_get_esc_seq(lua_State *L) {
-	int rnum = 1;
-	int n = luaL_checkinteger(L, 1);
-#ifndef WINDOWS
-	setup();
-#endif
-	int c = get_char();
-	if(c == 27) {
-		for(int i = 0; i < n-1; i++)
-			lua_pushinteger(L, get_char());
-		rnum = n-1;
-	}
-#ifndef WINDOWS
-	restore();
-#endif
-	return rnum;
-}
-
 static const luaL_Reg funcs[] = {
 	{"getChar", lua_get_char},
 	{"getCharSeq", lua_get_char_seq},
-	{"getEscSeq", lua_get_esc_seq},
 	{NULL, NULL}
 };
 
 int luaopen_lgetchar(lua_State *L) {
-	lua_newtable(L);
-	luaL_setfuncs(L, funcs, 0);
+	luaL_newlib(L, funcs);
 	return 1;
 }
 
@@ -113,4 +80,4 @@ int restore() {
 	changed_state = 0;
 	return ioctl(fileno(stdin), TCSETAW, &initial_state);
 }
-#endif
+#endif 
