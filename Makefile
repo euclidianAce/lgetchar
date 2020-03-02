@@ -1,19 +1,25 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -fPIC
 LIBS = -llua
 SRC = $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
+
+UNAME := $(shell uname)
+ifeq ($(UNAME), Linux)
+TARGET = lgetchar.so
+else
 TARGET = lgetchar.dll
+endif
 
 default: $(TARGET)
 
 %.o: %.c
-	$(CC) -fPIC $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ $(LIBS)
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -shared -o $(TARGET) $(LIBS)
+	$(CC) $(CFLAGS) $(OBJ) -shared -o $(TARGET)
 
 clean:
-	rm *.dll *.o
+	rm $(wildcard *.dll *.o *.so)
 
 all: clean $(TARGET)
