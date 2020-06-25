@@ -3,13 +3,15 @@
 #include <lauxlib.h>
 
 #if defined(WIN32) || defined(_WIN32)
-#define WINDOWS
-#include <conio.h>
+#	define WINDOWS
+#	include <conio.h>
+#	define setup()
+#	define restore()
 #else
-#include <termios.h>
-#include <sys/ioctl.h>
-int setup();
-int restore();
+#	include <termios.h>
+#	include <sys/ioctl.h>
+	int setup();
+	int restore();
 #endif
 
 int get_char() {
@@ -21,27 +23,19 @@ int get_char() {
 }
 
 int lua_get_char(lua_State *L) {
-#ifndef WINDOWS
 	setup();
-#endif
 	lua_pushnumber(L, get_char());
-#ifndef WINDOWS
 	restore();
-#endif
 	return 1;
 }
 
 int lua_get_char_seq(lua_State *L) {
 	int n = (int) luaL_checknumber(L, 1);
 	if(n < 1) return 0;
-#ifndef WINDOWS
 	setup();
-#endif
 	for(int i = 0; i < n; i++)
 		lua_pushnumber(L, get_char());
-#ifndef WINDOWS
 	restore();
-#endif
 	return n;
 }
 

@@ -25,7 +25,7 @@ Which for Windows, basically just calls `getch()`, and for non-windows will put 
 
 # Implementation Details
 For Windows, this is basically a wrapper for `getch()` from conio.h.
-For *nix, this uses termios.h and sys/ioctl.h to change some terminal settings (mainly turning off echo) and calls getchar().
+For \*nix, this uses termios.h and sys/ioctl.h to change some terminal settings (mainly turning off echo) and calls `getchar()`.
 I still have no idea how portable this is, but it has worked on a few of my machines decently enough.
 
 # Anyway
