@@ -1,25 +1,29 @@
 CC = gcc
-CFLAGS = -Wall -fPIC
+CFLAGS = -Wall -Wextra
 LIBS = -llua
-SRC = $(wildcard src/*.c)
-OBJ = $(SRC:.c=.o)
+
+SRC = $(wildcard *.c)
 
 UNAME := $(shell uname)
 ifeq ($(UNAME), Linux)
-	TARGET = lgetchar.so
+	TARGET = raw.so
 else
-	TARGET = lgetchar.dll
+	TARGET = raw.dll
 endif
 
-default: $(TARGET)
+default: all
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@ $(LIBS)
+teal:
+	tl check
+	tl gen
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -shared -o $(TARGET)
+$(TARGET):
+	$(CC) $(CFLAGS) -fPIC $(SRC) -shared -o $(TARGET)
 
 clean:
-	rm $(wildcard *.dll src/*.o *.so)
+	rm -f *.o *.so *.dll
+	rm -f $(filter-out tlconfig.lua, $(wildcard *.lua))
 
-all: clean $(TARGET)
+all: clean $(TARGET) teal
+
+.PHONY: all clean

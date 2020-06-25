@@ -31,9 +31,9 @@ int lua_get_char(lua_State *L) {
 
 int lua_get_char_seq(lua_State *L) {
 	int n = (int) luaL_checknumber(L, 1);
-	if(n < 1) return 0;
+	if (n < 1) return 0;
 	setup();
-	for(int i = 0; i < n; i++)
+	for (int i = 0; i < n; i++)
 		lua_pushnumber(L, get_char());
 	restore();
 	return n;
@@ -45,7 +45,7 @@ static const luaL_Reg funcs[] = {
 	{NULL, NULL}
 };
 
-int luaopen_lgetchar(lua_State *L) {
+int luaopen_raw(lua_State *L) {
 	luaL_newlib(L, funcs);
 	return 1;
 }
@@ -57,7 +57,7 @@ static int changed_state;
 int setup() {
 	struct termio m;
 	int stdinfileno = fileno(stdin);
-	if(ioctl(stdinfileno, TCGETA, &initial_state) < 0) {
+	if (ioctl(stdinfileno, TCGETA, &initial_state) < 0) {
 		return 0;
 	}
 	changed_state = 1;
@@ -68,7 +68,7 @@ int setup() {
 	return ioctl(stdinfileno, TCSETAW, &m);
 }
 int restore() {
-	if(!changed_state) {
+	if (!changed_state) {
 		return 0;
 	}
 	changed_state = 0;

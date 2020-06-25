@@ -15,8 +15,12 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-      lgetchar = {
-         sources = "lgetchar.c",
-      }
+      ["lgetchar.raw"] = {
+         sources = {
+            "raw.c",  
+         }
+      },
+      ["lgetchar.wrapper"] = "wrapper.lua",
+      ["lgetchar.init"] = "init.lua",
    }
 }
