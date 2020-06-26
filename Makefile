@@ -23,6 +23,7 @@ $(TARGET):
 clean:
 	rm -f *.o *.so *.dll
 	rm -f $(filter-out tlconfig.lua, $(wildcard *.lua))
+	rm -fr lgetchar
 
 all: clean $(TARGET) teal
 

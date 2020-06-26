@@ -45,7 +45,7 @@ static const luaL_Reg funcs[] = {
 	{NULL, NULL}
 };
 
-int luaopen_raw(lua_State *L) {
+int luaopen_lgetchar_raw(lua_State *L) {
 	luaL_newlib(L, funcs);
 	return 1;
 }
