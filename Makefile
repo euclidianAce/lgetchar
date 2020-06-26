@@ -11,7 +11,7 @@ else
 	TARGET = raw.dll
 endif
 
-default: all
+default: teal $(TARGET)
 
 teal:
 	tl check
