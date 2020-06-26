@@ -1,23 +1,20 @@
-local _tl_compat53 = ((tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3) and require('compat53.module'); local assert = _tl_compat53 and _tl_compat53.assert or assert; local ipairs = _tl_compat53 and _tl_compat53.ipairs or ipairs; local os = _tl_compat53 and _tl_compat53.os or os; local pcall = _tl_compat53 and _tl_compat53.pcall or pcall; local string = _tl_compat53 and _tl_compat53.string or string
+
 local raw = require("lgetchar.raw")
 
 local M = {
    keys = nil,
 }
 
-local function tobytes(keys)
-   local bytes = {}
+local function toset(keys)
+   local set = {}
    for i, v in ipairs(keys) do
-      if type(v) == "string" then
-         v = string.byte(v)
-      end
-      bytes[v] = true
+      set[v] = true
    end
-   return bytes
+   return set
 end
 
 function M.expect(keys)
-   local set = tobytes(keys)
+   local set = toset(keys)
    local key
    repeat
       key = raw.getChar()
@@ -35,9 +32,6 @@ function M.expectSeq(initSeq)
    local function insertseq(seq, val)
       local currentNode = tree
       for i, v in ipairs(seq) do
-         if type(v) == "string" then
-            v = string.byte(v)
-         end
          if currentNode.value then
             return nil, "Sequence %d causes conflicts"
          end
@@ -70,8 +64,7 @@ function M.expectSeq(initSeq)
       local ok, res = pcall(raw.getChar, true)
       if not ok then
          raw.restore()
-         print(res)
-         os.exit(1)
+         error(res, 2)
       end
       current = current[res]
       if not current then

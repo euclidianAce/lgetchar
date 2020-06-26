@@ -14,7 +14,7 @@ function lgetchar.getCharSeq(n: number): string
 	return string.char(raw.getCharSeq(n))
 end
 
-function lgetchar.expect(keys: {{number|string}}): {number|string}, {{number|string}}
+function lgetchar.expect(keys: {{number}}): {number}, {{number}}
 	local result = wrapper.expectSeq(keys)
 	return keys[result], keys
 end

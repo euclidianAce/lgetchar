@@ -5,19 +5,16 @@ local M = {
 	keys: {string:{number}} = nil
 }
 
-local function tobytes(keys: {number|string}): {number:boolean}
-	local bytes: {number:boolean} = {}
+local function toset(keys: {number}): {number:boolean}
+	local set: {number:boolean} = {}
 	for i, v in ipairs(keys) do
-		if v is string then
-			v = string.byte(v)
-		end
-		bytes[v as number] = true
+		set[v] = true
 	end
-	return bytes
+	return set
 end
 
-function M.expect(keys: {number|string}): number
-	local set: {number:boolean} = tobytes(keys)
+function M.expect(keys: {number}): number
+	local set: {number:boolean} = toset(keys)
 	local key: number
 	repeat
 		key = raw.getChar()
@@ -25,28 +22,25 @@ function M.expect(keys: {number|string}): number
 	return key
 end
 
-function M.expectSeq(initSeq: {{number|string}}): number
+function M.expectSeq(initSeq: {{number}}): number
 	local Node = record
 		{Node} -- technically an map of {number:Node}
 		len: number
 		value: number
 	end
 	local tree: Node = {len = 0}
-	local function insertseq(seq: {number|string}, val: number): boolean, string
+	local function insertseq(seq: {number}, val: number): boolean, string
 		local currentNode = tree
 		for i, v in ipairs(seq) do
-			if v is string then
-				v = string.byte(v)
-			end
 			if currentNode.value then
 				return nil, "Sequence %d causes conflicts"
 			end
-			if not currentNode[v as number] then
-				currentNode[v as number] = {len = 0}
+			if not currentNode[v] then
+				currentNode[v] = {len = 0}
 			end
 			currentNode.value = nil
 			currentNode.len = currentNode.len + 1
-			currentNode = currentNode[v as number]
+			currentNode = currentNode[v]
 			if currentNode.len > 0 and i == #seq then
 				return nil, "Sequence %d terminates too early"
 			end
@@ -70,8 +64,7 @@ function M.expectSeq(initSeq: {{number|string}}): number
 		local ok, res = pcall(raw.getChar, true)
 		if not ok then
 			raw.restore()
-			print(res)
-			os.exit(1)
+			error(res as string, 2)
 		end
 		current = current[res]
 		if not current then
