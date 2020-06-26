@@ -1,4 +1,4 @@
-
+local _tl_compat53 = ((tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3) and require('compat53.module'); local assert = _tl_compat53 and _tl_compat53.assert or assert; local ipairs = _tl_compat53 and _tl_compat53.ipairs or ipairs; local os = _tl_compat53 and _tl_compat53.os or os; local pcall = _tl_compat53 and _tl_compat53.pcall or pcall; local string = _tl_compat53 and _tl_compat53.string or string
 local raw = require("lgetchar.raw")
 
 local M = {
@@ -41,15 +41,15 @@ function M.expectSeq(initSeq)
          if currentNode.value then
             return nil, "Sequence %d causes conflicts"
          end
-         if currentNode.len > 0 and i == #seq then
-            return nil, "Sequence %d terminates too early"
-         end
          if not currentNode[v] then
             currentNode[v] = { len = 0 }
          end
          currentNode.value = nil
          currentNode.len = currentNode.len + 1
          currentNode = currentNode[v]
+         if currentNode.len > 0 and i == #seq then
+            return nil, "Sequence %d terminates too early"
+         end
       end
       currentNode.value = val
       return true
@@ -65,12 +65,20 @@ function M.expectSeq(initSeq)
 
 
    local current = tree
+   raw.setup()
    repeat
-      current = current[raw.getChar()]
+      local ok, res = pcall(raw.getChar, true)
+      if not ok then
+         raw.restore()
+         print(res)
+         os.exit(1)
+      end
+      current = current[res]
       if not current then
          current = tree
       end
    until current.value
+   raw.restore()
    return current.value
 end
 

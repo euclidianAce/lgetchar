@@ -41,15 +41,15 @@ function M.expectSeq(initSeq: {{number|string}}): number
 			if currentNode.value then
 				return nil, "Sequence %d causes conflicts"
 			end
-			if currentNode.len > 0 and i == #seq then
-				return nil, "Sequence %d terminates too early"
-			end
 			if not currentNode[v as number] then
 				currentNode[v as number] = {len = 0}
 			end
 			currentNode.value = nil
 			currentNode.len = currentNode.len + 1
 			currentNode = currentNode[v as number]
+			if currentNode.len > 0 and i == #seq then
+				return nil, "Sequence %d terminates too early"
+			end
 		end
 		currentNode.value = val
 		return true
@@ -65,12 +65,20 @@ function M.expectSeq(initSeq: {{number|string}}): number
 
 	-- use getchar to traverse the tree, resetting when a node isn't found
 	local current = tree
+	raw.setup()
 	repeat
-		current = current[raw.getChar()]
+		local ok, res = pcall(raw.getChar, true)
+		if not ok then
+			raw.restore()
+			print(res)
+			os.exit(1)
+		end
+		current = current[res]
 		if not current then
 			current = tree
 		end
 	until current.value
+	raw.restore()
 	return current.value
 end
 

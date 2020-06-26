@@ -2,6 +2,12 @@
 #include <lualib.h>
 #include <lauxlib.h>
 
+#ifdef DEBUG
+#	include <stdio.h>
+#	define log(...) printf(__VA_ARGS__)
+#else
+#	define log(...)
+#endif
 #if defined(WIN32) || defined(_WIN32)
 #	define WINDOWS
 #	include <conio.h>
@@ -23,25 +29,49 @@ int get_char() {
 }
 
 int lua_get_char(lua_State *L) {
-	setup();
+	int should_setup = lua_isnoneornil(L, 1);
+	if (should_setup) {
+		log("Setting up\n");
+		setup();
+	}
 	lua_pushnumber(L, get_char());
-	restore();
+	if (should_setup) {
+		log("Restoring\n");
+		restore();
+	}
 	return 1;
 }
 
 int lua_get_char_seq(lua_State *L) {
-	int n = (int) luaL_checknumber(L, 1);
+	int n = luaL_checknumber(L, 1);
+	int should_setup = lua_isnoneornil(L, 2);
 	if (n < 1) return 0;
-	setup();
+	if (should_setup) {
+		setup();
+	}
 	for (int i = 0; i < n; i++)
 		lua_pushnumber(L, get_char());
-	restore();
+	if (should_setup) {
+		restore();
+	}
 	return n;
+}
+
+int lua_setup(lua_State *L) {
+	lua_pushboolean(L, setup());
+	return 1;
+}
+
+int lua_restore(lua_State *L) {
+	lua_pushboolean(L, restore());
+	return 1;
 }
 
 static const luaL_Reg funcs[] = {
 	{"getChar", lua_get_char},
 	{"getCharSeq", lua_get_char_seq},
+	{"setup", lua_setup},
+	{"restore", lua_restore},
 	{NULL, NULL}
 };
 
@@ -58,6 +88,7 @@ int setup() {
 	struct termio m;
 	int stdinfileno = fileno(stdin);
 	if (ioctl(stdinfileno, TCGETA, &initial_state) < 0) {
+		log("Not setting up, state already changed.\n");
 		return 0;
 	}
 	changed_state = 1;
@@ -68,7 +99,9 @@ int setup() {
 	return ioctl(stdinfileno, TCSETAW, &m);
 }
 int restore() {
+	log("changed_state: %d\n", changed_state);
 	if (!changed_state) {
+		log("Not actually restoring, state not changed.\n");
 		return 0;
 	}
 	changed_state = 0;
