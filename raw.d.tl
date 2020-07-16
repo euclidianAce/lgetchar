@@ -4,8 +4,10 @@ local raw = record
 	getChar: function(boolean): number
 	getCharSeq: function(number): number...
 	getCharSeq: function(number, boolean): number...
-	setup: function()
-	restore: function()
+	setup: function(): boolean
+	nonBlockingSetup: function(): boolean
+	restore: function(): boolean
+	poll: function(): boolean, number
 end
 
 return raw

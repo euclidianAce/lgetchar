@@ -1,12 +1,12 @@
 package = "lgetchar"
 version = "dev-1"
 source = {
-   url = "git://github.com/3uclidian/lgetchar",
+   url = "git://github.com/euclidianAce/lgetchar",
 }
 description = {
    summary = "A library for getting raw keyboard input in a terminal.",
    detailed = [[Some Lua bindings for getch() and getchar() for simple input in a terminal.]],
-   homepage = "https://github.com/3uclidian/lgetchar",
+   homepage = "https://github.com/euclidianAce/lgetchar",
    license = "MIT"
 }
 dependencies = {
@@ -17,10 +17,16 @@ build = {
    modules = {
       ["lgetchar.raw"] = {
          sources = {
-            "raw.c",  
-         }
+            "raw.c",
+         },
       },
       ["lgetchar.wrapper"] = "wrapper.lua",
       ["lgetchar.init"] = "init.lua",
-   }
+   },
+   install = {
+      lua = {
+         "init.tl",
+         "wrapper.tl",
+      },
+   },
 }
