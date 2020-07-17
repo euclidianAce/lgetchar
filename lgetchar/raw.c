@@ -44,6 +44,7 @@ int lua_get_char(lua_State *L) {
 	return 1;
 }
 
+// @teal-export function(boolean): number...
 int lua_get_char_seq(lua_State *L) {
 	const int n = luaL_checknumber(L, 1);
 	const int should_setup = lua_isnoneornil(L, 2);
@@ -87,6 +88,7 @@ int lua_restore(lua_State *L) {
 	return 1;
 }
 
+// @teal-exports
 static const luaL_Reg funcs[] = {
 	{"getChar", lua_get_char},
 	{"getCharSeq", lua_get_char_seq},

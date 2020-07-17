@@ -111,10 +111,10 @@ function M.expectSeq(initSeq: {{number}}): number
 end
 
 M.keys = {
-	up = {27, 91, 65}
-	down = {27, 91, 66}
-	right = {27, 91, 67}
-	left = {27, 91, 68}
+	up = {27, 91, 65},
+	down = {27, 91, 66},
+	right = {27, 91, 67},
+	left = {27, 91, 68},
 	-- crtl = {a = {27, 92}}, etc.
 }
 

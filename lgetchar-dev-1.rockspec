@@ -17,16 +17,17 @@ build = {
    modules = {
       ["lgetchar.raw"] = {
          sources = {
-            "raw.c",
+            "lgetchar/raw.c",
          },
       },
-      ["lgetchar.wrapper"] = "wrapper.lua",
-      ["lgetchar.init"] = "init.lua",
+      ["lgetchar.wrapper"] = "lgetchar/wrapper.lua",
+      ["lgetchar.init"] = "lgetchar/init.lua",
    },
    install = {
       lua = {
-         "init.tl",
-         "wrapper.tl",
+         ["lgetchar.init"] = "lgetchar/init.tl",
+         ["lgetchar.wrapper"] = "lgetchar/wrapper.tl",
+         ["lgetchar.raw"] = "lgetchar/raw.d.tl",
       },
    },
 }

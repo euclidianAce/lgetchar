@@ -1,6 +1,5 @@
 return {
 	skip_compat53 = true,
-	include = {
-		"**/*.tl",
-	},
+	source_dir = "lgetchar",
+	include = { "**/*" },
 }
