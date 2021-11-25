@@ -2,7 +2,7 @@
 I just wanted a way to detect arrow key presses in Lua.
 After scouring the internet and reading very sparse man pages, this is what I've come up with.
 
-# Teal 
+# Teal
 ## (i.e. What are all those .tl files?)
 This module is written with [Teal](https://github.com/teal-language/tl), a typed dialect of Lua.
 
@@ -23,28 +23,28 @@ lgetchar is separated into 3 modules:
 ### `raw`
  - `lgetchar.raw.setup(): boolean` `lgetchar.raw.restore(): boolean`
  	- Toggle canonical mode and echo, returns whether or not the operation succeeded
- - `lgetchar.raw.getChar(noSetup: boolean): number`
+ - `lgetchar.raw.getChar(noSetup: boolean): integer`
  	- calls `getch` or `getchar` and returns the result
 	- pass in `true` if you want to manually `raw.setup` yourself
- - `lgetchar.raw.getCharSeq(len: number, noSetup: boolean): number...`
+ - `lgetchar.raw.getCharSeq(len: integer, noSetup: boolean): integer...`
  	- calls `getch` or `getchar` `len` times and returns the results
 	- pass in `true` if you want to manually `raw.setup` yourself
 ### `wrapper`
- - `lgetchar.wrapper.keys: {string:{number}}`
+ - `lgetchar.wrapper.keys: {string:{integer}}`
  	- A map of keys to use in `expect` functions
 	- For example, `keys.up` is the up arrow escape sequence, `{27, 91, 65}`
- - `lgetchar.wrapper.expect(keys: {number}): number`
+ - `lgetchar.wrapper.expect(keys: {integer}): integer`
  	- calls `raw.getChar` until the result is one of `keys`
- - `lgetchar.wrapper.expectSeq(keys: {{number}}): number`
+ - `lgetchar.wrapper.expectSeq(keys: {{integer}}): integer`
  	- calls `raw.getChar` until the resulting sequence is one of `keys`
 ### `lgetchar`
- - `lgetchar.keys: {string:{number}}`
+ - `lgetchar.keys: {string:{integer}}`
  	- an alias for `wrapper.keys`
  - `lgetchar.getChar(): string`
  	- calls `raw.getChar` and returns the result as a character
- - `lgetchar.getCharSeq(len: number): string`
+ - `lgetchar.getCharSeq(len: integer): string`
  	- calls `raw.getCharSeq` and returns the result as a string
- - `lgetchar.expect(keys: {{number}}): {number}, {{number}}`
+ - `lgetchar.expect(keys: {{integer}}): {integer}, {{integer}}`
  	- calls `wrapper.expectSeq` and returns which key was caught
 	- also returns the array passed in for convenience
 
