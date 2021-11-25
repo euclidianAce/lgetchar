@@ -1,9 +1,8 @@
 default:
-	tl build
-	luarocks make
+	cyan build
+	luarocks --local make
 clean:
 	rm -f *.o *.so *.dll
-	rm -f $(filter-out tlconfig.lua, $(wildcard *.lua))
-	rm -fr lgetchar
+	rm -f $(wildcard lgetchar/*.lua)
 
 .PHONY: clean

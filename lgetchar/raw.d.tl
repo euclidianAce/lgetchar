@@ -1,13 +1,10 @@
-
-local raw = record
-	getChar: function(): number
-	getChar: function(boolean): number
-	getCharSeq: function(number): number...
-	getCharSeq: function(number, boolean): number...
+local record raw
+	getChar: function(boolean): integer
+	getCharSeq: function(integer, boolean): integer...
 	setup: function(): boolean
 	nonBlockingSetup: function(): boolean
 	restore: function(): boolean
-	poll: function(): boolean, number
+	poll: function(): boolean, integer
 end
 
 return raw

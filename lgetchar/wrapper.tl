@@ -1,33 +1,32 @@
-
 local raw = require("lgetchar.raw")
 
 local M = {
-	keys: {string:{number}} = nil
+	keys: {string:{integer}} = nil
 }
 
-local function toset(keys: {number}): {number:boolean}
-	local set: {number:boolean} = {}
-	for i, v in ipairs(keys) do
+local function toset(keys: {integer}): {integer:boolean}
+	local set: {integer:boolean} = {}
+	for _, v in ipairs(keys) do
 		set[v] = true
 	end
 	return set
 end
 
-function M.expect(keys: {number}): number
-	local set: {number:boolean} = toset(keys)
-	local key: number
+function M.expect(keys: {integer}): integer
+	local set: {integer:boolean} = toset(keys)
+	local key: integer
 	repeat
 		key = raw.getChar()
 	until set[key]
 	return key
 end
 
-local Node = record
-	{Node} -- technically a map of {number:Node}
-	len: number
-	value: number -- if this is non-nil, this node is a leaf
+local record Node
+	{Node} -- technically a map of {integer:Node}
+	len: integer
+	value: integer -- if this is non-nil, this node is a leaf
 end
-local function insertseq(tree: Node, seq: {number}, val: number): boolean, string
+local function insertseq(tree: Node, seq: {integer}, val: integer): boolean, string
 	local currentNode = tree
 	for i, v in ipairs(seq) do
 		if currentNode.value then
@@ -46,7 +45,7 @@ local function insertseq(tree: Node, seq: {number}, val: number): boolean, strin
 	currentNode.value = val
 	return true
 end
-local function buildTree(keys: {{number}}): Node
+local function buildTree(keys: {{integer}}): Node
 	local tree: Node = {len = 0}
 	for i, sequence in ipairs(keys) do
 		assert(#sequence > 0, "Sequence " .. i .. " is empty")
@@ -58,7 +57,7 @@ local function buildTree(keys: {{number}}): Node
 	return tree
 end
 
-local function pollFrom(keys: {{number}}): boolean, number
+local function pollFrom(keys: {{integer}}): boolean, integer
 	local tree = buildTree(keys)
 
 	local current = tree
@@ -79,18 +78,18 @@ local function pollFrom(keys: {{number}}): boolean, number
 	raw.restore()
 	return true, current.value
 end
-function M.poll(keys: {{number}}): function(): boolean, number
+function M.poll(keys: {{integer}}): function(): boolean, integer
 	local co = coroutine.create(pollFrom)
-	return function(): boolean, number
+	return function(): boolean, integer
 		local ok, res1, res2 = coroutine.resume(co, keys)
 		if not ok then
 			error(res1 as string)
 		end
-		return res1 as boolean, res2 as number
+		return res1 as boolean, res2 as integer
 	end
 end
 
-function M.expectSeq(initSeq: {{number}}): number
+function M.expectSeq(initSeq: {{integer}}): integer
 	local tree = buildTree(initSeq)
 	-- use getchar to traverse the tree, resetting when a node isn't found
 	local current = tree

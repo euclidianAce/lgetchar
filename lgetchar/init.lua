@@ -1,4 +1,4 @@
-local raw = require("lgetchar.raw")
+local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = true, require('compat53.module'); if p then _tl_compat = m end end; local io = _tl_compat and _tl_compat.io or io; local os = _tl_compat and _tl_compat.os or os; local pcall = _tl_compat and _tl_compat.pcall or pcall; local string = _tl_compat and _tl_compat.string or string; local raw = require("lgetchar.raw")
 local wrapper = require("lgetchar.wrapper")
 
 local lgetchar = {

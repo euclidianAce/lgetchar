@@ -1,4 +1,4 @@
-local raw = require("lgetchar.raw")
+local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = true, require('compat53.module'); if p then _tl_compat = m end end; local assert = _tl_compat and _tl_compat.assert or assert; local coroutine = _tl_compat and _tl_compat.coroutine or coroutine; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local pcall = _tl_compat and _tl_compat.pcall or pcall; local string = _tl_compat and _tl_compat.string or string; local raw = require("lgetchar.raw")
 
 local M = {
    keys = nil,
@@ -6,7 +6,7 @@ local M = {
 
 local function toset(keys)
    local set = {}
-   for i, v in ipairs(keys) do
+   for _, v in ipairs(keys) do
       set[v] = true
    end
    return set

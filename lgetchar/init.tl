@@ -1,4 +1,3 @@
-
 local raw = require("lgetchar.raw")
 local wrapper = require("lgetchar.wrapper")
 
@@ -10,20 +9,20 @@ function lgetchar.getChar(): string
 	return string.char(raw.getChar())
 end
 
-function lgetchar.getCharSeq(n: number): string
+function lgetchar.getCharSeq(n: integer): string
 	return string.char(raw.getCharSeq(n))
 end
 
-function lgetchar.expect(keys: {{number}}): {number}, {{number}}
+function lgetchar.expect(keys: {{integer}}): {integer}, {{integer}}
 	local result = wrapper.expectSeq(keys)
 	return keys[result], keys
 end
 
-function lgetchar.createPoller(keys: {{number}}): function(boolean): {number}
+function lgetchar.createPoller(keys: {{integer}}): function(boolean): {integer}
 	local poller = wrapper.poll(keys)
-	return function(block: boolean): {number}
+	return function(block: boolean): {integer}
 		repeat
-			local ok, gotChar, idx: boolean, boolean|string, number = pcall(poller)
+			local ok, gotChar, idx: boolean, boolean|string, integer = pcall(poller)
 			if not ok and gotChar == "interrupted!" then
 				raw.restore() -- guarantee when intrrupted to restore the terminal
 				io.stderr:write(gotChar as string, "\n")
