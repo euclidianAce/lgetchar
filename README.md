@@ -21,32 +21,33 @@ lgetchar is separated into 3 modules:
  - `lgetchar`: The main module.
 
 ### `raw`
- - `lgetchar.raw.setup(): boolean` `lgetchar.raw.restore(): boolean`
- 	- Toggle canonical mode and echo, returns whether or not the operation succeeded
- - `lgetchar.raw.getChar(noSetup: boolean): integer`
- 	- calls `getch` or `getchar` and returns the result
-	- pass in `true` if you want to manually `raw.setup` yourself
- - `lgetchar.raw.getCharSeq(len: integer, noSetup: boolean): integer...`
- 	- calls `getch` or `getchar` `len` times and returns the results
-	- pass in `true` if you want to manually `raw.setup` yourself
+ - `raw.setup(): boolean, string`  `raw.nonBlockingSetup(): boolean, string`
+   - Turn off canonical mode and echo. Returns whether the operation succeeded and an error message if any.
+   - These functions will probably only error when stdin is not a tty or an `ioctl` call fails
+ - `raw.restore(): boolean, string`
+   - Re-enable canonical mode and echo. Returns whether the operation succeded and an error message if any.
+ - `raw.getChar(noSetup: boolean): integer, string`
+   - `read`s from stdin, returns the character read as an integer or nil and an error message. This function automatically calls `setup()` and `restore()`, pass `true` to do these manually.
+ - `raw.getCharSeq(len: integer, noSetup: boolean): integer... | (nil, string)`
+   - reads for `len` characters and returns them as integers, or nil and an error message. `noSetup` is the same as `getChar`
+
 ### `wrapper`
- - `lgetchar.wrapper.keys: {string:{integer}}`
- 	- A map of keys to use in `expect` functions
-	- For example, `keys.up` is the up arrow escape sequence, `{27, 91, 65}`
- - `lgetchar.wrapper.expect(keys: {integer}): integer`
- 	- calls `raw.getChar` until the result is one of `keys`
- - `lgetchar.wrapper.expectSeq(keys: {{integer}}): integer`
- 	- calls `raw.getChar` until the resulting sequence is one of `keys`
+ - `wrapper.keys: {string:{integer}}`
+   - A map of keys to use in `expect` functions: For example, `keys.up` is the up arrow escape sequence, `{27, 91, 65}`
+ - `wrapper.expect(keys: {integer}): integer, string`
+   - calls `raw.getChar` until the result is one of `keys`, forwards any errors
+ - `wrapper.expectSeq(keys: {{integer}}): integer, string`
+   - calls `raw.getChar` until the resulting sequence is one of `keys`, forwards any errors
+
 ### `lgetchar`
  - `lgetchar.keys: {string:{integer}}`
- 	- an alias for `wrapper.keys`
- - `lgetchar.getChar(): string`
- 	- calls `raw.getChar` and returns the result as a character
- - `lgetchar.getCharSeq(len: integer): string`
- 	- calls `raw.getCharSeq` and returns the result as a string
- - `lgetchar.expect(keys: {{integer}}): {integer}, {{integer}}`
- 	- calls `wrapper.expectSeq` and returns which key was caught
-	- also returns the array passed in for convenience
+   - an alias for `wrapper.keys`
+ - `lgetchar.getChar(): string, string`
+   - calls `raw.getChar` and returns the result as a character, or nil and an error message
+ - `lgetchar.getCharSeq(len: integer): string, string`
+   - calls `raw.getCharSeq` and returns the result as a string, or nil and an error message
+ - `lgetchar.expect(keys: {{integer}}): {integer}, string`
+   - calls `wrapper.expectSeq` and returns which key was caught, or nil and an error message
 
 # Implementation Details
 For Windows, this is basically a wrapper for `getch()` from conio.h.

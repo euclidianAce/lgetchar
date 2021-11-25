@@ -1,94 +1,154 @@
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#include <unistd.h>
 
-#ifdef DEBUG
-#	include <stdio.h>
-#	define log(...) printf(__VA_ARGS__)
-#else
-#	define log(...)
-#endif
-#if defined(_WIN32)
-#	include <conio.h>
-#	define setup()
-#	define restore()
-#	define non_blocking_setup()
-#else
-#	include <termios.h>
-#	include <sys/ioctl.h>
-	int setup();
-	int non_blocking_setup();
-	int restore();
-#endif
-
-int get_char() {
 #ifdef _WIN32
-	return getch();
+#	include <io.h>
+#	include <conio.h>
+#	define setup() 1
+#	define restore() 1
+#	define non_blocking_setup() 1
 #else
-	return getchar();
+#	include <sys/ioctl.h>
+#	include <termios.h>
+#	include <unistd.h>
+	static int setup();
+	static int non_blocking_setup();
+	static int restore();
 #endif
-}
 
-int lua_get_char(lua_State *L) {
+static inline int get_char();
+static inline int is_stdin_tty();
+
+#ifdef _WIN32
+	static inline int get_char() { return getch(); }
+	static inline int is_stdin_tty() { return _isatty(STDIN_FILENO); }
+#else
+	static inline int get_char() { return getchar(); }
+	static inline int is_stdin_tty() { return isatty(STDIN_FILENO); }
+#endif
+
+#define CHECK_TTY(lstate) do { \
+		if (!is_stdin_tty()) { \
+			lua_pushnil(lstate); \
+			lua_pushstring(lstate, "stdin is not a tty"); \
+			return 2; \
+		} \
+	} while (0)
+
+#define FAIL_WITH_ERRNO_IF(L, expr) do { if (expr) { lua_pushnil(L); lua_pushstring(L, strerror(errno)); } } while (0)
+
+// @teal-export getChar: function(boolean): integer, string [[
+//    gets a character,
+//    if the argument is falsy, `setup` will be called automatically,
+//    otherwise you will need to call it yourself
+//
+//    on success returns the character,
+//    on error returns nil + error message
+// ]]
+static int lua_get_char(lua_State *L) {
+	CHECK_TTY(L);
+
 	const int should_setup = lua_isnoneornil(L, 1);
 	if (should_setup) {
-		log("Setting up\n");
-		setup();
+		FAIL_WITH_ERRNO_IF(L, setup() < 0);
 	}
 	lua_pushnumber(L, get_char());
 	if (should_setup) {
-		log("Restoring\n");
-		restore();
+		FAIL_WITH_ERRNO_IF(L, restore() < 0);
 	}
 	return 1;
 }
 
-// @teal-export function(boolean): number...
-int lua_get_char_seq(lua_State *L) {
+// @teal-export getCharSeq: function(n: integer, noSetup: boolean): integer, string|integer, integer... [[
+//    get `n` characters from stdin and return them
+//    on error returns nil + an error message
+// ]]
+static int lua_get_char_seq(lua_State *L) {
+	CHECK_TTY(L);
+
 	const int n = luaL_checknumber(L, 1);
 	const int should_setup = lua_isnoneornil(L, 2);
 	if (n < 1) return 0;
 	if (should_setup) {
-		setup();
+		FAIL_WITH_ERRNO_IF(L, setup() < 0);
 	}
 	for (int i = 0; i < n; i++) {
 		lua_pushnumber(L, get_char());
 	}
 	if (should_setup) {
-		restore();
+		FAIL_WITH_ERRNO_IF(L, restore() < 0);
 	}
 	return n;
 }
 
-int lua_poll(lua_State *L) {
+// @teal-export poll: function(): boolean, integer|string [[
+//    on error returns nil + an error message
+//    otherwise polls stdin:
+//       when a character is available:
+//          returns true + the read character as an integer
+//       otherwise:
+//          returns true + nil
+// ]]
+static int lua_poll(lua_State *L) {
+	CHECK_TTY(L);
+
 	int c = 0;
-	int got_char = read(fileno(stdin), &c, 1);
-	log("poll called, got_char: %d\n", got_char);
+	int got_char = read(STDIN_FILENO, &c, 1);
+	FAIL_WITH_ERRNO_IF(L, got_char < 0);
+
 	lua_pushboolean(L, got_char);
 	if (got_char) {
 		lua_pushnumber(L, c);
-		return 2;
+	} else {
+		lua_pushnil(L);
 	}
+	return 2;
+}
+
+// @teal-export setup: function(): boolean, string [[
+//    puts the terminal into raw mode and disables echo
+//    reports whether the operation succeeded and the error message
+// ]]
+static int lua_setup(lua_State *L) {
+	CHECK_TTY(L);
+
+	FAIL_WITH_ERRNO_IF(L, setup() < 0);
+	lua_pushboolean(L, 1);
+
 	return 1;
 }
 
-int lua_setup(lua_State *L) {
-	lua_pushboolean(L, setup());
+// @teal-export nonBlockingSetup: function(): boolean, string [[
+//    puts the terminal into raw mode, disables echo, and will not cause reads to block
+//    reports whether the operation succeeded and the error message
+// ]]
+static int lua_non_blocking_setup(lua_State *L) {
+	CHECK_TTY(L);
+
+	FAIL_WITH_ERRNO_IF(L, non_blocking_setup() < 0);
+	lua_pushboolean(L, 1);
+
 	return 1;
 }
 
-int lua_non_blocking_setup(lua_State *L) {
-	lua_pushboolean(L, non_blocking_setup());
+// @teal-export restore: function(): boolean, string [[
+//    undoes a setup operation
+//    reports whether the operation succeeded and the error message
+// ]]
+static int lua_restore(lua_State *L) {
+	CHECK_TTY(L);
+
+	FAIL_WITH_ERRNO_IF(L, restore() < 0);
+	lua_pushboolean(L, 1);
+
 	return 1;
 }
 
-int lua_restore(lua_State *L) {
-	lua_pushboolean(L, restore());
-	return 1;
-}
-
-// @teal-exports
 static const luaL_Reg funcs[] = {
 	{"getChar", lua_get_char},
 	{"getCharSeq", lua_get_char_seq},
@@ -105,44 +165,63 @@ LUA_API int luaopen_lgetchar_raw(lua_State *L) {
 }
 
 #ifndef _WIN32
+#include <signal.h>
+
 static struct termio initial_state;
 static int changed_state;
+struct sigaction old_action = {0};
 
-int setup() {
-	struct termio m;
-	const int stdinfileno = fileno(stdin);
-	if (ioctl(stdinfileno, TCGETA, &initial_state) < 0) {
-		log("Not setting up, state already changed.\n");
-		return 0;
-	}
-	changed_state = 1;
-	m = initial_state;
-	m.c_lflag &= ~(ICANON|ECHO); // turn off cannonical mode and echo
-	m.c_cc[VMIN] = 1; // Minimum chars to input
-	m.c_cc[VTIME] = 0; // Timeout 0 secs
-	return ioctl(stdinfileno, TCSETAW, &m);
+static void interrupt_handler(int sig) {
+	restore();
+	if (old_action.sa_handler)
+		old_action.sa_handler(sig);
 }
-int non_blocking_setup() {
-	struct termio m;
-	const int stdinfileno = fileno(stdin);
-	if (ioctl(stdinfileno, TCGETA, &initial_state) < 0) {
-		log("Not setting up, state already changed.\n");
-		return 0;
-	}
-	changed_state = 1;
-	m = initial_state;
-	m.c_lflag &= ~(ICANON|ECHO); // turn off cannonical mode and echo
-	m.c_cc[VMIN] = 0; // Minimum chars to input
-	m.c_cc[VTIME] = 0; // Timeout 0 secs
-	return ioctl(stdinfileno, TCSETAW, &m);
+
+#define SETUP_SIGINT_HANDLER() do { \
+		struct sigaction action = {0}; \
+		action.sa_handler = interrupt_handler; \
+		if (sigfillset(&action.sa_mask) != 0) \
+			return -1; \
+		if (sigaction(SIGINT, &action, &old_action) != 0) \
+			return -1; \
+	} while (0)
+
+static inline void initialize_termio(struct termio *m, cc_t vmin) {
+	*m = initial_state;
+	m->c_lflag &= ~(ICANON|ECHO); // turn off cannonical mode and echo
+	m->c_cc[VMIN] = vmin; // Minimum chars to input
+	m->c_cc[VTIME] = 0; // Timeout 0 secs
 }
-int restore() {
-	log("changed_state: %d\n", changed_state);
-	if (!changed_state) {
-		log("Not actually restoring, state not changed.\n");
+
+static int setup() {
+	if (ioctl(STDIN_FILENO, TCGETA, &initial_state) < 0)
 		return 0;
-	}
+	SETUP_SIGINT_HANDLER();
+	changed_state = 1;
+	struct termio m;
+	initialize_termio(&m, 1);
+	return ioctl(STDIN_FILENO, TCSETAW, &m);
+}
+
+static int non_blocking_setup() {
+	if (ioctl(STDIN_FILENO, TCGETA, &initial_state) < 0)
+		return 0;
+	SETUP_SIGINT_HANDLER();
+	changed_state = 1;
+	struct termio m;
+	initialize_termio(&m, 0);
+	return ioctl(STDIN_FILENO, TCSETAW, &m);
+}
+
+static int restore() {
+	if (!changed_state)
+		return 0;
 	changed_state = 0;
-	return ioctl(fileno(stdin), TCSETAW, &initial_state);
+
+	if (sigaction(SIGINT, &old_action, NULL) != 0)
+		return -1;
+
+	return ioctl(STDIN_FILENO, TCSETAW, &initial_state);
 }
-#endif 
+
+#endif

@@ -1,6 +1,6 @@
-local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = true, require('compat53.module'); if p then _tl_compat = m end end; local assert = _tl_compat and _tl_compat.assert or assert; local coroutine = _tl_compat and _tl_compat.coroutine or coroutine; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local pcall = _tl_compat and _tl_compat.pcall or pcall; local string = _tl_compat and _tl_compat.string or string; local raw = require("lgetchar.raw")
+local _tl_compat; if (tonumber((_VERSION or ''):match('[%d.]*$')) or 0) < 5.3 then local p, m = true, require('compat53.module'); if p then _tl_compat = m end end; local assert = _tl_compat and _tl_compat.assert or assert; local coroutine = _tl_compat and _tl_compat.coroutine or coroutine; local ipairs = _tl_compat and _tl_compat.ipairs or ipairs; local string = _tl_compat and _tl_compat.string or string; local raw = require("lgetchar.raw")
 
-local M = {
+local wrapper = {
    keys = nil,
 }
 
@@ -12,11 +12,14 @@ local function toset(keys)
    return set
 end
 
-function M.expect(keys)
+function wrapper.expect(keys)
    local set = toset(keys)
-   local key
+   local key, err
    repeat
-      key = raw.getChar()
+      key, err = raw.getChar()
+      if not key then
+         return nil, err
+      end
    until set[key]
    return key
 end
@@ -61,55 +64,66 @@ local function pollFrom(keys)
    local tree = buildTree(keys)
 
    local current = tree
-   raw.nonBlockingSetup()
+   local ok, err = raw.nonBlockingSetup()
+   if not ok then return nil, err end
    repeat
-      local gotChar, char = false, 0
-      while not gotChar do
-         gotChar, char = raw.poll()
-         if not gotChar then
+      local res
+      while not res do
+         ok, res = raw.poll()
+         if not ok then
+            return nil, res
+         end
+         if not res then
             coroutine.yield(false)
          end
-      end
-      current = current[char]
-      if not current then
-         current = tree
-      end
-   until current.value
-   raw.restore()
-   return true, current.value
-end
-function M.poll(keys)
-   local co = coroutine.create(pollFrom)
-   return function()
-      local ok, res1, res2 = coroutine.resume(co, keys)
-      if not ok then
-         error(res1)
-      end
-      return res1, res2
-   end
-end
-
-function M.expectSeq(initSeq)
-   local tree = buildTree(initSeq)
-
-   local current = tree
-   raw.setup()
-   repeat
-      local ok, res = pcall(raw.getChar, true)
-      if not ok then
-         raw.restore()
-         error(res, 2)
       end
       current = current[res]
       if not current then
          current = tree
       end
    until current.value
-   raw.restore()
+   ok, err = raw.restore()
+   if not ok then return nil, err end
+   return true, current.value
+end
+
+
+
+
+
+function wrapper.poll(keys)
+   local co = coroutine.create(pollFrom)
+   return function()
+      return select(2, assert(coroutine.resume(co, keys)))
+
+   end
+end
+
+
+
+function wrapper.expectSeq(initSeq)
+   local tree = buildTree(initSeq)
+
+   local current = tree
+   local ok, c, err
+   ok, err = raw.setup()
+   if not ok then return nil, err end
+   repeat
+      c, err = raw.getChar(true)
+      if not c then
+         return nil, err
+      end
+      current = current[c]
+      if not current then
+         current = tree
+      end
+   until current.value
+   ok, err = raw.restore()
+   if not ok then return nil, err end
    return current.value
 end
 
-M.keys = {
+wrapper.keys = {
    up = { 27, 91, 65 },
    down = { 27, 91, 66 },
    right = { 27, 91, 67 },
@@ -119,7 +133,7 @@ M.keys = {
 }
 
 for i = 33, 128 do
-   M.keys[string.char(i)] = { i }
+   wrapper.keys[string.char(i)] = { i }
 end
 
-return M
+return wrapper
